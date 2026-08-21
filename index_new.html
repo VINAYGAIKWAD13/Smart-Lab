@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="mr">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#1565c0"><title>नांदणी हायस्कूल - Smart Lab Inventory</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Arial;background:#f4f7fb;color:#1f2937}
+header{background:#1565c0;color:#fff;padding:16px;position:sticky;top:0;z-index:5}.head{max-width:950px;margin:auto;display:flex;gap:12px;align-items:center}
+.logo{width:54px;height:54px;border-radius:12px;background:#fff;color:#1565c0;display:grid;place-items:center;font-size:28px;font-weight:800}
+h1{font-size:19px;margin:0}.sub{font-size:12px;opacity:.9;margin-top:3px}.wrap{max-width:950px;margin:auto;padding:14px}
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}.card,section{background:#fff;border-radius:14px;padding:13px;box-shadow:0 2px 10px #00000010}.num{font-size:24px;font-weight:750}.label{font-size:11px;color:#64748b}
+nav{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0}button{border:0;border-radius:10px;padding:10px;font-weight:650;background:#1565c0;color:#fff}button.secondary{background:#e7eef8;color:#164a7b}button.danger{background:#c62828}
+input,select,textarea{width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:9px;margin:4px 0 9px;font-size:14px}label{font-size:12px;font-weight:650;color:#475569}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}.full{grid-column:1/-1}.toolbar{display:flex;gap:7px;flex-wrap:wrap}
+.roomgrid,.cupgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.room,.cup{padding:12px;border:1px solid #dbe4ef;border-radius:12px;background:#f8fbff}
+.item{border:1px solid #e2e8f0;border-radius:12px;padding:11px;margin:8px 0}.item h3{margin:0 0 5px;font-size:16px}.meta{font-size:12px;line-height:1.65;color:#475569}.badge{display:inline-block;background:#e8f1ff;color:#1557a6;border-radius:20px;padding:2px 7px;font-size:10px;margin:2px}.photo{width:68px;height:68px;object-fit:cover;border-radius:9px;float:right}.hidden{display:none!important}.empty{text-align:center;color:#64748b;padding:22px}
+@media(max-width:650px){.cards{grid-template-columns:repeat(2,1fr)}nav{grid-template-columns:repeat(2,1fr)}.grid{grid-template-columns:1fr}.full{grid-column:auto}.roomgrid,.cupgrid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header><div class="head"><div class="logo">🔬</div><div><h1>नांदणी हायस्कूल, नांदणी</h1><div class="sub">Smart प्रयोगशाळा साहित्य व्यवस्थापन</div></div></div></header>
+<div class="wrap">
+<div class="cards">
+<div class="card"><div class="num" id="types">0</div><div class="label">साहित्य प्रकार</div></div>
+<div class="card"><div class="num" id="qty">0</div><div class="label">एकूण संख्या</div></div>
+<div class="card"><div class="num" id="bad">0</div><div class="label">खराब</div></div>
+<div class="card"><div class="num" id="repair">0</div><div class="label">दुरुस्ती</div></div>
+</div>
+<nav>
+<button onclick="show('inventory')">📦 Inventory</button><button onclick="show('form')">➕ साहित्य जोडा</button>
+<button onclick="show('rooms')">🏫 2 खोल्या</button><button onclick="show('search')">🔎 Search</button>
+</nav>
+
+<section id="inventory"><h2>📦 सर्व साहित्य</h2>
+<div class="toolbar">
+<button class="secondary" onclick="setFilter('All')">सर्व</button><button class="secondary" onclick="setFilter('Physics')">⚡ Physics</button>
+<button class="secondary" onclick="setFilter('Chemistry')">🧪 Chemistry</button><button class="secondary" onclick="setFilter('Biology')">🧬 Biology</button>
+</div><div id="items"></div></section>
+
+<section id="rooms" class="hidden"><h2>🏫 प्रयोगशाळेच्या 2 खोल्या</h2>
+<div class="roomgrid">
+<div class="room"><b>Room 1</b><br><small>10 कपाटे • Chemistry + Glassware • 5 मोठे टेबल</small><div class="cupgrid" style="margin-top:8px" id="r1"></div></div>
+<div class="room"><b>Room 2</b><br><small>8 कपाटे • Physics + Biology • 6 टेबल</small><div class="cupgrid" style="margin-top:8px" id="r2"></div></div>
+</div></section>
+
+<section id="cupboard" class="hidden"><h2 id="cupTitle">🗄️ कपाट</h2><div id="cupItems"></div></section>
+
+<section id="search" class="hidden"><h2>🔎 साहित्य शोधा</h2><input id="q" placeholder="उदा. Ammeter / Beaker / Microscope" oninput="search()"><div id="results"></div></section>
+
+<section id="form" class="hidden"><h2 id="formTitle">➕ नवीन साहित्य जोडा</h2>
+<form id="f"><input type="hidden" id="idx" value="-1"><div class="grid">
+<div><label>रजिस्टर क्रमांक *</label><input id="regNo" required placeholder="उदा. 3101 / 3151A"></div><div><label>साहित्याचे नाव *</label><input id="name" required list="itemNames" oninput="autoFill()"><datalist id="itemNames"></datalist></div><div><label>Formula</label><input id="formula" placeholder="आपोआप येईल; आवश्यक असल्यास बदला"></div><div><label>विषय</label><select id="subject"><option>Physics</option><option>Chemistry</option><option>Biology</option><option>General</option></select></div>
+<div><label>खोली</label><select id="room"><option>Room 1</option><option>Room 2</option></select></div><div><label>कपाट क्रमांक</label><select id="cupboardNo"></select></div>
+<div><label>एकूण संख्या</label><input id="totalQty" type="number" min="0"></div><div><label>चांगले</label><input id="good" type="number" min="0"></div>
+<div><label>खराब</label><input id="badQty" type="number" min="0"></div><div><label>दुरुस्ती आवश्यक</label><input id="repairQty" type="number" min="0"></div>
+<div><label>खरेदी वर्ष</label><input id="year" type="number" min="1900" max="2100"></div><div><label>किंमत (₹)</label><input id="price" type="number" min="0"></div>
+<div><label>Dead Stock No.</label><input id="deadNo"></div><div><label>फोटो</label><input id="photo" type="file" accept="image/*"></div>
+<div class="full"><label>Remark</label><textarea id="remark" rows="3"></textarea></div></div>
+<div class="toolbar"><button>💾 Save</button><button type="button" class="secondary" onclick="resetForm();show('inventory')">Cancel</button></div>
+</form></section>
+
+<section id="report" class="hidden"><h2>📊 Report</h2><div id="report"></div><hr><div class="toolbar"><button onclick="backup()">⬇️ Backup</button><button class="secondary" onclick="document.getElementById('restore').click()">⬆️ Restore</button><input id="restore" type="file" accept=".json" class="hidden" onchange="restore(event)"></div></section>
+</div>
+<script>
+let data=JSON.parse(localStorage.getItem('nandaniLab')||'[]'),filter='All';
+const $=id=>document.getElementById(id), num=v=>Number(v)||0;
+function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
+function save(){localStorage.setItem('nandaniLab',JSON.stringify(data));dash();list();report()}
+function dash(){$('types').textContent=data.length;$('qty').textContent=data.reduce((a,x)=>a+num(x.totalQty),0);$('bad').textContent=data.reduce((a,x)=>a+num(x.badQty),0);$('repair').textContent=data.reduce((a,x)=>a+num(x.repairQty),0)}
+function item(x,i){let p=x.photo?`<img class="photo" src="${x.photo}">`:'';return `<div class="item">${p}<h3>${esc(x.name)}</h3><span class="badge">रजिस्टर क्र. ${esc(x.regNo||"-")}</span><span class="badge">${esc(x.subject)}</span>${x.formula&&x.formula!=="—"?`<span class="badge">Formula: ${esc(x.formula)}</span>`:""}<span class="badge">${esc(x.room)}</span><span class="badge">Cupboard ${esc(x.cupboardNo)}</span><div class="meta">एकूण ${num(x.totalQty)} • चांगले ${num(x.good)} • खराब ${num(x.badQty)} • दुरुस्ती ${num(x.repairQty)}<br>खरेदी: ${esc(x.year||'-')} • ₹${num(x.price)} • Dead Stock: ${esc(x.deadNo||'-')}<br>${esc(x.remark||'')}</div><div class="toolbar"><button onclick="edit(${i})">✏️ Edit</button><button class="danger" onclick="del(${i})">🗑️ Delete</button></div></div>`}
+function list(){let a=data.map((x,i)=>({...x,i})).filter(x=>filter==='All'||x.subject===filter);$('items').innerHTML=a.length?a.map(x=>item(x,x.i)).join(''):'<div class="empty">नोंद उपलब्ध नाही.</div>'}
+function setFilter(x){filter=x;list();show('inventory')}
+function search(){let q=($('q').value||'').toLowerCase();let a=data.map((x,i)=>({...x,i})).filter(x=>JSON.stringify(x).toLowerCase().includes(q));$('results').innerHTML=a.length?a.map(x=>item(x,x.i)).join(''):'<div class="empty">साहित्य सापडले नाही.</div>'}
+function show(id){['inventory','rooms','cupboard','search','form','report'].forEach(x=>$(x).classList.add('hidden'));$(id).classList.remove('hidden');if(id==='rooms')rooms();if(id==='report')report();scrollTo(0,0)}
+function rooms(){let r1='',r2='';for(let i=1;i<=10;i++)r1+=`<button class="secondary" onclick="openCup('Room 1',${i})">कपाट ${i}</button>`;for(let i=1;i<=8;i++)r2+=`<button class="secondary" onclick="openCup('Room 2',${i})">कपाट ${i}</button>`;$('r1').innerHTML=r1;$('r2').innerHTML=r2}
+function openCup(r,c){$('cupTitle').textContent=`🗄️ ${r} – Cupboard ${c}`;let a=data.map((x,i)=>({...x,i})).filter(x=>x.room===r&&String(x.cupboardNo)===String(c));$('cupItems').innerHTML=a.length?a.map(x=>item(x,x.i)).join(''):'<div class="empty">या कपाटाची नोंद अजून केलेली नाही.</div>';show('cupboard')}
+function updateCups(){let r=$('room').value,n=r==='Room 1'?10:8;$('cupboardNo').innerHTML=Array.from({length:n},(_,i)=>`<option>${i+1}</option>`).join('')}
+$('room').addEventListener('change',updateCups);
+function resetForm(){$('f').reset();$('idx').value=-1;$('formTitle').textContent='➕ नवीन साहित्य जोडा';updateCups()}
+function edit(i){let x=data[i];show('form');$('formTitle').textContent='✏️ साहित्य बदल';$('idx').value=i;$('regNo').value=x.regNo||'';$('name').value=x.name;$('formula').value=x.formula||'';$('subject').value=x.subject;$('room').value=x.room;updateCups();$('cupboardNo').value=x.cupboardNo;['totalQty','good','badQty','repairQty','year','price','deadNo','remark'].forEach(k=>$(k).value=x[k]??'')}
+$('f').addEventListener('submit',async e=>{e.preventDefault();let i=Number($('idx').value),file=$('photo').files[0],photo='';if(file)photo=await new Promise(r=>{let f=new FileReader();f.onload=()=>r(f.result);f.readAsDataURL(file)});let x={regNo:$('regNo').value.trim(),name:$('name').value.trim(),formula:$('formula').value.trim(),subject:$('subject').value,room:$('room').value,cupboardNo:$('cupboardNo').value,totalQty:num($('totalQty').value),good:num($('good').value),badQty:num($('badQty').value),repairQty:num($('repairQty').value),year:$('year').value,price:num($('price').value),deadNo:$('deadNo').value,remark:$('remark').value};if(photo)x.photo=photo;else if(i>=0)x.photo=data[i].photo||'';if(!x.regNo){alert('रजिस्टर क्रमांक आवश्यक आहे.');return}if(i>=0)data[i]=x;else data.push(x);save();resetForm();show('inventory')})
+function del(i){if(confirm('ही नोंद Delete करायची आहे का?')){data.splice(i,1);save()}}
+function report(){$('report').innerHTML=['Physics','Chemistry','Biology','General'].map(s=>{let a=data.filter(x=>x.subject===s);return `<p><b>${s}</b> — ${a.length} प्रकार, ${a.reduce((z,x)=>z+num(x.totalQty),0)} संख्या</p>`}).join('')+`<p><b>एकूण:</b> ${data.length} प्रकार, ${data.reduce((z,x)=>z+num(x.totalQty),0)} संख्या</p>`}
+function backup(){let b=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='Nandani_Smart_Lab_Backup.json';a.click()}
+function restore(e){let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{let x=JSON.parse(r.result);if(Array.isArray(x)){data=x;save();alert('Restore पूर्ण झाले.')}}catch{alert('Backup चुकीचा आहे.')}};r.readAsText(f)}
+const masterItems=[
+["Hydrochloric acid","HCl","Chemistry"],["Sulphuric acid","H₂SO₄","Chemistry"],["Nitric acid","HNO₃","Chemistry"],
+["Sodium hydroxide","NaOH","Chemistry"],["Potassium hydroxide","KOH","Chemistry"],["Copper sulphate","CuSO₄","Chemistry"],
+["Sodium chloride","NaCl","Chemistry"],["Sodium carbonate","Na₂CO₃","Chemistry"],["Calcium carbonate","CaCO₃","Chemistry"],
+["Ammonium chloride","NH₄Cl","Chemistry"],["Potassium permanganate","KMnO₄","Chemistry"],["Magnesium sulphate","MgSO₄","Chemistry"],
+["Aluminium sulphate","Al₂(SO₄)₃","Chemistry"],["Ferrous sulphate","FeSO₄","Chemistry"],["Beaker","—","Chemistry"],
+["Test Tube","—","Chemistry"],["Measuring Cylinder","—","Chemistry"],["Microscope","—","Biology"],["Slide","—","Biology"],
+["Cover Slip","—","Biology"],["Ammeter","—","Physics"],["Voltmeter","—","Physics"],["Galvanometer","—","Physics"],
+["Resistance","—","Physics"],["Variable Resistance","—","Physics"],["Concave Lens","—","Physics"],["Convex Lens","—","Physics"],
+["Concave Mirror","—","Physics"],["Convex Mirror","—","Physics"],["Magnet","—","Physics"],["Thermometer","—","Physics"],
+["Spring Balance","—","Physics"]];
+function buildMaster(){const dl=document.getElementById('itemNames');if(dl)dl.innerHTML=masterItems.map(x=>`<option value="${x[0]}">${x[2]}${x[1]!=="—"?" • "+x[1]:""}</option>`).join("");}
+function autoFill(){const q=document.getElementById('name').value.trim().toLowerCase();const hit=masterItems.find(x=>x[0].toLowerCase()===q);if(hit){document.getElementById('formula').value=hit[1];document.getElementById('subject').value=hit[2];}}
+buildMaster();
+updateCups();dash();list();rooms();report();
+</script>
+</body></html>
